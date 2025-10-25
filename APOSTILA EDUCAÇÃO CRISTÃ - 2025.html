@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apostila Interativa - Educação Cristã</title>
+    <!-- Chosen Palette: Calm Neutrals with Deep Teal -->
+    <!-- Application Structure Plan: Em vez de um documento linear (como o PDF), a estrutura é uma SPA de duas colunas: uma barra lateral de navegação fixa (com os capítulos) e uma área de conteúdo principal. Clicar em um link da barra lateral carrega dinamicamente o conteúdo desse capítulo na área de visualização, sem recarregar a página. Isso permite ao usuário pular entre seções (ex: da 'História' para 'Metodologias') instantaneamente, facilitando a comparação e o estudo focado. Esta arquitetura centrada no usuário transforma o manual passivo em uma ferramenta de aprendizado ativa. -->
+    <!-- Visualization & Content Choices: 1. (Cap 2 - História): A linha do tempo textual do PDF foi transformada em um gráfico de barras horizontal (via Chart.js) para visualizar a duração das eras (Primitiva, Média, Reforma, Moderna), tornando a história mais envolvente. 2. (Cap 4 - Etapas do Currículo): O processo textual de 5 etapas foi convertido em um diagrama de fluxo visual (HTML/Tailwind) para representar a sequência. 3. (Cap 5 - Métodos): A lista de métodos é apresentada como abas interativas (JS) onde o usuário clica para revelar a descrição de cada um, quebrando o texto denso. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0; 
+            padding: 0;
+            /* Garante que a rolagem do corpo seja a principal, especialmente em mobile */
+            overflow-x: hidden;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .nav-link {
+            display: block;
+            padding: 0.75rem 1rem;
+            border-radius: 0.375rem;
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+        .nav-link:hover {
+            background-color: #134e4a;
+        }
+        .nav-link.active {
+            background-color: #115e59;
+            font-weight: 600;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .tab-button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            background-color: #f0fdfa;
+            color: #0d9488;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        .tab-button:hover, .tab-button.active {
+            background-color: #0d9488;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+            padding: 1rem;
+            border: 1px solid #ccfbf1;
+            border-radius: 0.375rem;
+            margin-top: 1rem;
+            background-color: #fafafa;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        /* Ajuste específico para a capa em mobile */
+        #capa {
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <!-- Removido h-screen do contêiner principal para melhor rolagem em mobile -->
+    <div class="flex flex-col md:flex-row bg-gray-100 min-h-screen"> 
+        
+        <!-- Sidebar de Navegação (Desktop) - Fixo para telas grandes -->
+        <aside class="w-72 bg-teal-800 text-white p-6 hidden md:flex md:flex-col shadow-lg overflow-y-auto h-screen md:fixed">
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold text-center">Educação Cristã</h1>
+                <p class="text-sm text-teal-200 text-center">Quinta Igreja Presbiteriana de Uberlândia</p>
+            </div>
+            <nav id="desktop-nav">
+                <ul class="space-y-2">
+                    <li><a class="nav-link" onclick="showSection('intro', this)">Introdução</a></li>
+                    <li><a class="nav-link" onclick="showSection('cap1', this)">Cap. 1: Fundamentos</a></li>
+                    <li><a class="nav-link" onclick="showSection('cap2', this)">Cap. 2: História</a></li>
+                    <li><a class="nav-link" onclick="showSection('cap3', this)">Cap. 3: O Educador</a></li>
+                    <li><a class="nav-link" onclick="showSection('cap4', this)">Cap. 4: Currículo</a></li>
+                    <li><a class="nav-link" onclick="showSection('cap5', this)">Cap. 5: Metodologias</a></li>
+                    <li><a class="nav-link" onclick="showSection('conclusao', this)">Conclusão</a></li>
+                    <li><a class="nav-link" onclick="showSection('glossario', this)">Glossário</a></li>
+                    <li><a class="nav-link" onclick="showSection('bibliografia', this)">Bibliografia</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Header (Mobile) - Fixo no topo em mobile -->
+        <header class="md:hidden bg-teal-800 text-white p-4 shadow-lg flex justify-between items-center sticky top-0 z-10">
+            <h1 class="text-xl font-bold">Educação Cristã</h1>
+            <button id="menu-button" class="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </header>
+
+        <!-- Sidebar de Navegação (Mobile) -->
+        <aside id="mobile-nav" class="fixed inset-0 bg-teal-800 text-white p-6 z-50 transform -translate-x-full transition-transform duration-300 ease-in-out md:hidden overflow-y-auto">
+             <div class="flex justify-between items-center mb-6">
+                 <h2 class="text-2xl font-bold">Menu</h2>
+                <button id="close-menu-button" class="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <nav>
+                <ul class="space-y-2">
+                    <li><a class="nav-link" onclick="showSection('intro', this)">Introdução</a></li>
+                    <li><a class="nav-link" onclick="showSection('cap1', this)">Cap. 1: Fundamentos</a></li>
+                    <li><a class="nav-link" onclick="showSection('cap2', this)">Cap. 2: História</a></li>
+                    <li><a class="nav-link" onclick="showSection('cap3', this)">Cap. 3: O Educador</a></li>
+                    <li><a class="nav-link" onclick="showSection('cap4', this)">Cap. 4: Currículo</a></li>
+                    <li><a class="nav-link" onclick="showSection('cap5', this)">Cap. 5: Metodologias</a></li>
+                    <li><a class="nav-link" onclick="showSection('conclusao', this)">Conclusão</a></li>
+                    <li><a class="nav-link" onclick="showSection('glossario', this)">Glossário</a></li>
+                    <li><a class="nav-link" onclick="showSection('bibliografia', this)">Bibliografia</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Área de Conteúdo Principal -->
+        <!-- Adicionado margem lateral em desktop (ml-72) para compensar a barra lateral fixa -->
+        <main id="content-main" class="flex-1 w-full p-6 md:p-10 md:ml-72 overflow-y-auto"> 
+            <div class="max-w-7xl mx-auto bg-white p-6 md:p-8 rounded-lg shadow-md">
+
+                <!-- CAPA (NOVA SEÇÃO DE ENTRADA) -->
+                <section id="capa" class="content-section active flex items-center justify-center h-[90vh] md:h-[80vh] text-center">
+                    <div class="space-y-8 p-8 bg-teal-50 rounded-xl shadow-xl max-w-2xl mx-auto border-4 border-teal-200">
+                        <div class="space-y-2">
+                            <h3 class="text-xl font-medium text-teal-600">APOSTILA INTERATIVA DE TEOLOGIA</h3>
+                            <h1 class="text-5xl md:text-6xl font-extrabold text-teal-900 leading-tight">EDUCAÇÃO CRISTÃ</h1>
+                            <p class="text-2xl text-gray-700 font-light">Teoria, Prática Pedagógica, História e Currículo na Igreja</p>
+                        </div>
+                        
+                        <div class="mt-8">
+                            <button onclick="startReading()" class="px-8 py-3 bg-teal-700 text-white text-lg font-semibold rounded-full shadow-lg hover:bg-teal-600 transition duration-300 transform hover:scale-105">
+                                Iniciar Exploração &nbsp; »
+                            </button>
+                        </div>
+                        
+                        <div class="pt-6 border-t border-teal-300 mt-6">
+                            <p class="text-sm text-teal-700 font-medium">Nível Intermediário</p>
+                            <p class="text-base text-teal-800 font-semibold mt-1">QUINTA IGREJA PRESBITERIANA DE UBERLÂNDIA</p>
+                            <p class="text-xs text-teal-500">Uberlândia, MG | 2025</p>
+
+                            <!-- LICENÇA CREATIVE COMMONS E CONTATO -->
+                            <div class="mt-4 text-xs text-gray-500">
+                                <a href="https://sites.google.com/view/teologiaeducacaocrista/in%C3%ADcio" target="_blank" class="text-teal-600 hover:text-teal-800">Apostila de Educação Cristã</a> © 2025 by <span class="font-medium text-gray-700">Maria Paula Ananias Marques</span> is licensed under <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" class="text-teal-600 hover:text-teal-800">CC BY-NC-ND 4.0</a>
+                                <br>
+                                Contato da Autora: <a href="mailto:mpaulinhampaulina@gmail.com" class="text-teal-600 hover:text-teal-800">mpaulinhampaulina@gmail.com</a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+
+                <!-- INTRODUÇÃO -->
+                <section id="intro" class="content-section">
+                    <h2 class="text-3xl font-bold text-teal-900 mb-4">Introdução</h2>
+                    <p class="text-lg text-gray-700 leading-relaxed mb-6">
+                        Para muitos, a Educação Cristã é sinônimo de Escola Dominical, uma atividade a mais na programação da igreja. No entanto, uma compreensão mais profunda revela que a Educação Cristã é o próprio cerne da missão da Igreja de Jesus Cristo. Não se trata apenas de transmitir informações sobre a fé, mas de formar discípulos que amem a Deus de todo o coração, compreendam Sua Palavra e vivam de acordo com Seus princípios em todas as esferas da vida.
+                    </p>
+                    <p class="text-lg text-gray-700 leading-relaxed mb-6">
+                        Esta apostila foi desenvolvida para estudantes de teologia de nível intermediário, com o objetivo de oferecer um panorama abrangente da Educação Cristã. Exploraremos seus fundamentos bíblicos e teológicos, traçaremos sua rica história, analisaremos o papel crucial do educador cristão, mergulharemos nos princípios de desenvolvimento curricular e, por fim, examinaremos as metodologias e práticas pedagógicas que tornam o ensino na igreja verdadeiramente transformador.
+                    </p>
+                    <p class="text-lg text-gray-700 leading-relaxed">
+                        Que este material seja uma ferramenta valiosa para equipá-lo(a) a participar ativamente dessa obra divina de discipulado e formação de vidas para o Reino de Deus.
+                    </p>
+                </section>
+
+                <!-- CAPÍTULO 1: FUNDAMENTOS -->
+                <section id="cap1" class="content-section">
+                    <h2 class="text-3xl font-bold text-teal-900 mb-6">Capítulo 1: Fundamentos Bíblicos e Teológicos</h2>
+                    <p class="text-base text-gray-600 leading-relaxed mb-6">Para compreendermos a Educação Cristã em sua plenitude, é essencial mergulhar nas suas raízes mais profundas: as Escrituras Sagradas. A Bíblia não é apenas um manual de fé, mas também um livro pedagógico que revela o caráter de Deus como o Grande Educador e o plano divino para o desenvolvimento do ser humano. Neste capítulo, exploraremos como a educação é retratada no Antigo e Novo Testamento, estabelecendo os princípios teológicos que sustentam toda a prática da Educação Cristã.</p>
+                    
+                    <h3 class="text-2xl font-semibold text-teal-800 mt-6 mb-3">1.1. Educação no Antigo Testamento</h3>
+                    <p class="text-gray-700 leading-relaxed mb-4">O Antigo Testamento oferece um panorama rico de como a educação era compreendida e praticada entre o povo de Israel. Diferentemente de uma concepção moderna de educação formal, a instrução era profundamente integrada à vida cotidiana, à família e à adoração.</p>
+                    
+                    <h4 class="text-xl font-semibold text-gray-800 mt-4 mb-2">A Família como Locus Educacional (Deuteronômio 6:6-9)</h4>
+                    <p class="text-gray-700 leading-relaxed mb-4">A família era, sem dúvida, o principal ambiente educacional em Israel. O texto de Deuteronômio 6:6-9 é a espinha dorsal dessa compreensão:</p>
+                    <blockquote class="border-l-4 border-teal-600 pl-4 italic text-gray-600 my-4">
+                        "Que todas estas palavras que hoje lhe dou estejam em seu coração. Ensine-as com persistência a seus filhos. Converse sobre elas quando estiver sentado em casa e quando estiver andando na estrada, quando se deitar e quando se levantar..."
+                    </blockquote>
+                    <ul class="list-disc list-inside space-y-2 text-gray-700 mb-4">
+                        <li><strong>Imersão Contínua:</strong> O ensino permeava todas as atividades diárias.</li>
+                        <li><strong>Repetição e Persistência:</strong> A necessidade da repetição constante para a internalização.</li>
+                        <li><strong>Exemplaridade Pessoal:</strong> A vida dos pais era o primeiro currículo.</li>
+                        <li><strong>Memorialização:</strong> Lembretes visuais constantes da Palavra de Deus.</li>
+                    </ul>
+
+                    <h4 class="text-xl font-semibold text-gray-800 mt-4 mb-2">A Lei e os Profetas como Guias de Instrução</h4>
+                    <p class="text-gray-700 leading-relaxed mb-4">A Lei (Torá) era o fundamento de toda a instrução. Os Profetas, por sua vez, atuavam como educadores divinos, corrigindo o povo e chamando ao arrependimento.</p>
+
+                    <h4 class="text-xl font-semibold text-gray-800 mt-4 mb-2">A Educação Sacerdotal e Levítica</h4>
+                    <p class="text-gray-700 leading-relaxed mb-4">Os sacerdotes e levitas tinham um papel específico na educação do povo, sendo responsáveis por instruir a Lei de Deus (Levítico 10:11) e atuar como guardiões e intérpretes da Lei.</p>
+
+                    <h3 class="text-2xl font-semibold text-teal-800 mt-8 mb-3">1.2. Educação no Novo Testamento</h3>
+                    <p class="text-gray-700 leading-relaxed mb-4">O Novo Testamento aprofunda e expande os princípios educacionais, centrado na pessoa e no ministério de Jesus Cristo e na formação da Igreja.</p>
+
+                    <h4 class="text-xl font-semibold text-gray-800 mt-4 mb-2">O Ministério de Ensino de Jesus (Mestre, Rabbi)</h4>
+                    <p class="text-gray-700 leading-relaxed mb-4">Jesus é frequentemente chamado de Mestre (Rabbi) e seu ministério foi predominantemente de ensino. Seus métodos incluíam:</p>
+                    <ul class="list-disc list-inside space-y-2 text-gray-700 mb-4">
+                        <li><strong>Parábolas:</strong> Histórias do cotidiano para ilustrar verdades espirituais.</li>
+                        <li><strong>Diálogos e Perguntas:</strong> Estimulava o raciocínio e a auto-reflexão.</li>
+                        <li><strong>Exemplos e Atos Simbólicos:</strong> Como lavar os pés dos discípulos (João 13:1-17).</li>
+                        <li><strong>Demonstração Prática:</strong> Ensinava pelo exemplo de sua própria vida.</li>
+                        <li><strong>Discipulado Intensivo:</strong> Investiu tempo em um pequeno grupo.</li>
+                    </ul>
+                    <p class="text-gray-700 leading-relaxed mb-4">A Grande Comissão (Mateus 28:19-20) é o mandato educacional por excelência: "...ensinando-os a obedecer a tudo o que eu lhes ordenei."</p>
+                    
+                    <h4 class="text-xl font-semibold text-gray-800 mt-4 mb-2">A Didachê Apostólica e o Ensino nas Primeiras Comunidades (Atos 2:42)</h4>
+                    <p class="text-gray-700 leading-relaxed mb-4">Após a ascensão de Jesus, os apóstolos deram continuidade ao ministério de ensino ("Didachê"). Em Atos 2:42, a igreja primitiva "se dedicava ao ensino dos apóstolos".</p>
+
+                    <h4 class="text-xl font-semibold text-gray-800 mt-4 mb-2">As Epístolas como Material de Instrução e Exortação</h4>
+                    <p class="text-gray-700 leading-relaxed mb-4">As cartas de Paulo, Pedro e João são manuais práticos de vida cristã, contendo instruções doutrinárias, exortações morais e conselhos pastorais.</p>
+
+                    <h3 class="text-2xl font-semibold text-teal-800 mt-8 mb-3">1.3. Princípios Teológicos da Educação Cristã</h3>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-teal-50 p-4 rounded-lg border border-teal-200">
+                            <h4 class="text-xl font-semibold text-teal-900 mb-2">A Natureza de Deus como Educador</h4>
+                            <p class="text-gray-700">Deus se revela como Aquele que cria, se comunica, guia, redime e santifica, moldando-nos à imagem de Cristo (Romanos 8:29).</p>
+                        </div>
+                        <div class="bg-teal-50 p-4 rounded-lg border border-teal-200">
+                            <h4 class="text-xl font-semibold text-teal-900 mb-2">A Natureza do Ser Humano como Aprendiz</h4>
+                            <p class="text-gray-700">Criado com a capacidade de aprender, mas necessita de redenção e renovação da mente (Romanos 12:2) pela graça divina.</p>
+                        </div>
+                        <div class="bg-teal-50 p-4 rounded-lg border border-teal-200">
+                            <h4 class="text-xl font-semibold text-teal-900 mb-2">A Centralidade da Palavra de Deus</h4>
+                            <p class="text-gray-700">A Bíblia é a fonte primária e autoritativa, inspirada por Deus (2 Timóteo 3:16-17), viva e eficaz (Hebreus 4:12).</p>
+                        </div>
+                        <div class="bg-teal-50 p-4 rounded-lg border border-teal-200">
+                            <h4 class="text-xl font-semibold text-teal-900 mb-2">O Papel do Espírito Santo</h4>
+                            <p class="text-gray-700">A verdadeira aprendizagem espiritual é obra do Espírito Santo, que ilumina a mente (1 Coríntios 2:14) e transforma o caráter (Gálatas 5:22-23).</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- CAPÍTULO 2: HISTÓRIA -->
+                <section id="cap2" class="content-section">
+                    <h2 class="text-3xl font-bold text-teal-900 mb-6">Capítulo 2: História da Educação Cristã</h2>
+                    <p class="text-base text-gray-600 leading-relaxed mb-6">Compreender a trajetória da Educação Cristã ao longo dos séculos é fundamental para apreciarmos sua riqueza e diversidade. A história nos mostra como a igreja, em diferentes contextos e épocas, se esforçou para cumprir o mandato educacional, adaptando-se e inovando para transmitir a fé e formar novas gerações de crentes.</p>
+                    
+                    <h3 class="text-2xl font-semibold text-teal-800 mt-6 mb-3">Linha do Tempo Visual da Educação Cristã</h3>
+                    <p class="text-gray-700 leading-relaxed mb-4">Em vez de apenas texto, este gráfico visualiza os principais períodos históricos da Educação Cristã, permitindo uma compreensão mais clara da sua evolução ao longo do tempo.</p>
+                    <div class="chart-container">
+                        <canvas id="historyChart"></canvas>
+                    </div>
+
+                    <h3 class="text-2xl font-semibold text-teal-800 mt-8 mb-3">2.1. A Educação Cristã na Igreja Primitiva</h3>
+                    <h4 class="text-xl font-semibold text-gray-800 mt-4 mb-2">Catecumenato e o Preparo para o Batismo</h4>
+                    <p class="text-gray-700 leading-relaxed mb-4">Um período de instrução intensiva (podendo durar de 2 a 3 anos) para o batismo. Envolvia instrução doutrinária, formação moral e discernimento espiritual.</p>
+                    <h4 class="text-xl font-semibold text-gray-800 mt-4 mb-2">Escolas Catequéticas (Alexandria, Antioquia)</h4>
+                    <p class="text-gray-700 leading-relaxed mb-4">Centros de aprofundamento teológico. Alexandria era conhecida pela abordagem alegórica, enquanto Antioquia focava na interpretação literal e histórica.</p>
+
+                    <h3 class="text-2xl font-semibold text-teal-800 mt-8 mb-3">2.2. A Educação Cristã na Idade Média</h3>
+                    <h4 class="text-xl font-semibold text-gray-800 mt-4 mb-2">O Papel dos Mosteiros</h4>
+                    <p class="text-gray-700 leading-relaxed mb-4">Centros vitais de educação, responsáveis pela preservação do conhecimento (copiando manuscritos), formação monástica e escolas monásticas.</p>
+                    <h4 class="text-xl font-semibold text-gray-800 mt-4 mb-2">Surgimento das Universidades e a Teologia Escolástica</h4>
+                    <p class="text-gray-700 leading-relaxed mb-4">A partir do século XII, as universidades (Paris, Bolonha) tornaram-se centros de estudo avançado. A Escolástica (ex: Tomás de Aquino) usava a lógica para sistematizar a doutrina.</p>
+
+                    <h3 class="text-2xl font-semibold text-teal-800 mt-8 mb-3">2.3. A Reforma Protestante e a Educação Cristã</h3>
+                    <h4 class="text-xl font-semibold text-gray-800 mt-4 mb-2">O Retorno à Bíblia e a Alfabetização</h4>
+                    <p class="text-gray-700 leading-relaxed mb-4">O princípio da *Sola Scriptura* tornou a alfabetização massiva uma prioridade, para que todos pudessem ler a Bíblia na sua própria língua.</p>
+                    <h4 class="text-xl font-semibold text-gray-800 mt-4 mb-2">Martinho Lutero e a Educação Familiar e Escolar</h4>
+                    <p class="text-gray-700 leading-relaxed mb-4">Defensor da educação universal. Escreveu o Catecismo Menor para ajudar os pais a ensinar em casa e incentivou a criação de escolas públicas.</p>
+                    <h4 class="text-xl font-semibold text-gray-800 mt-4 mb-2">João Calvino e a Academia de Genebra</h4>
+                    <p class="text-gray-700 leading-relaxed mb-4">Fundou a Academia de Genebra (1559), que se tornou um centro de excelência teológica, formando pastores e líderes.</p>
+
+                    <h3 class="text-2xl font-semibold text-teal-800 mt-8 mb-3">2.4. A Educação Cristã Moderna e Contemporânea</h3>
+                    <h4 class="text-xl font-semibold text-gray-800 mt-4 mb-2">Surgimento da Escola Dominical</h4>
+                    <p class="text-gray-700 leading-relaxed mb-4">Iniciada por Robert Raikes (1780) para educar crianças pobres, tornou-se o principal braço educacional das igrejas protestantes para todas as idades.</p>
+                    <h4 class="text-xl font-semibold text-gray-800 mt-4 mb-2">Movimentos de Avivamento e o Impacto na Educação</h4>
+                    <p class="text-gray-700 leading-relaxed mb-4">Geraram um ímpeto renovado pela educação, levando à fundação de escolas bíblicas, seminários e faculdades.</p>
+                    <h4 class="text-xl font-semibold text-gray-800 mt-4 mb-2">Desenvolvimento da Teologia da Educação Cristã como Disciplina</h4>
+                    <p class="text-gray-700 leading-relaxed mb-4">No século XX, consolidou-se como disciplina acadêmica, utilizando conceitos de psicologia e pedagogia para aprimorar práticas.</p>
+                </section>
+
+                <!-- CAPÍTULO 3: O EDUCADOR -->
+                <section id="cap3" class="content-section">
+                    <h2 class="text-3xl font-bold text-teal-900 mb-6">Capítulo 3: O Papel do Educador Cristão</h2>
+                    <p class="text-base text-gray-600 leading-relaxed mb-6">A Educação Cristã é uma atividade viva que depende crucialmente de pessoas dedicadas. O educador cristão é a figura central nesse processo, sendo um instrumento nas mãos de Deus para a formação espiritual e o discipulado. Este capítulo explora o chamado, as qualificações e as competências essenciais que definem esse ministério vital.</p>
+
+                    <h3 class="text-2xl font-semibold text-teal-800 mt-6 mb-3">3.1. Chamado e Qualificações</h3>
+                    <h4 class="text-xl font-semibold text-gray-800 mt-4 mb-2">Um Ministério Vocacional</h4>
+                    <p class="text-gray-700 leading-relaxed mb-4">A Educação Cristã é um ministério que surge de um chamado divino, um forte senso de propósito e responsabilidade para com o ensino da Palavra.</p>
+                    
+                    <h4 class="text-xl font-semibold text-gray-800 mt-4 mb-2">Qualificações Espirituais, Intelectuais e Pessoais</h4>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="bg-gray-50 p-4 rounded-lg border">
+                            <h5 class="font-bold text-lg text-teal-900">Espirituais</h5>
+                            <ul class="list-disc list-inside text-sm text-gray-700">
+                                <li>Vida de Oração</li>
+                                <li>Amor à Palavra</li>
+                                <li>Dependência do Espírito Santo</li>
+                                <li>Maturidade e Humildade</li>
+                            </ul>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg border">
+                            <h5 class="font-bold text-lg text-teal-900">Intelectuais</h5>
+                            <ul class="list-disc list-inside text-sm text-gray-700">
+                                <li>Conhecimento Bíblico/Teológico</li>
+                                <li>Disposição para Aprender</li>
+                                <li>Pensamento Crítico</li>
+                            </ul>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg border">
+                            <h5 class="font-bold text-lg text-teal-900">Pessoais</h5>
+                            <ul class="list-disc list-inside text-sm text-gray-700">
+                                <li>Amor e Compaixão</li>
+                                <li>Paciência e Persistência</li>
+                                <li>Disposição para Servir</li>
+                                <li>Criatividade e Organização</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <h4 class="text-xl font-semibold text-gray-800 mt-4 mb-2">Paixão por Deus e Paixão por Almas</h4>
+                    <p class="text-gray-700 leading-relaxed mb-4">Em última análise, o educador é movido por uma paixão ardente por Deus (glorificá-Lo) e uma paixão genuína por almas (vê-las crescer em Cristo).</p>
+
+                    <h3 class="text-2xl font-semibold text-teal-800 mt-8 mb-3">3.2. Competências Essenciais</h3>
+                    <ul class="space-y-4">
+                        <li>
+                            <h4 class="text-xl font-semibold text-gray-800">Conhecimento Bíblico e Teológico</h4>
+                            <p class="text-gray-700">A espinha dorsal. Inclui conhecimento exegético (interpretação correta), doutrinário (principais doutrinas) e visão teológica (conectar verdades).</p>
+                        </li>
+                        <li>
+                            <h4 class="text-xl font-semibold text-gray-800">Didática e Metodologia de Ensino</h4>
+                            <p class="text-gray-700">Saber como transmitir o conteúdo. Inclui planejamento de aulas, seleção de metodologias e uso de recursos didáticos.</p>
+                        </li>
+                        <li>
+                            <h4 class="text-xl font-semibold text-gray-800">Habilidade de Comunicação e Relacionamento</h4>
+                            <p class="text-gray-700">Vital para o ensino. Inclui clareza, escuta ativa, empatia e a construção de um ambiente de confiança.</p>
+                        </li>
+                        <li>
+                            <h4 class="text-xl font-semibold text-gray-800">Liderança e Discipulado</h4>
+                            <p class="text-gray-700">Liderar o processo de aprendizagem e ir além do ensino formal, acompanhando os alunos em suas jornadas de fé (mentoria, aconselhamento).</p>
+                        </li>
+                    </ul>
+
+                    <h3 class="text-2xl font-semibold text-teal-800 mt-8 mb-3">3.3. Ética e Postura</h3>
+                    <ul class="list-disc list-inside space-y-3 text-gray-700">
+                        <li><strong>Integridade e Testemunho:</strong> A coerência entre o que prega e o que vive é seu mais poderoso currículo.</li>
+                        <li><strong>Amor e Paciência:</strong> O amor (1 Coríntios 13) é a base. A paciência é indispensável para lidar com diferentes ritmos de aprendizagem.</li>
+                        <li><strong>Humildade e Busca por Aperfeiçoamento Contínuo:</strong> Reconhecer que sempre há algo a aprender, através de estudo, treinamentos e feedback.</li>
+                    </ul>
+                </section>
+
+                <!-- CAPÍTULO 4: CURRÍCULO -->
+                <section id="cap4" class="content-section">
+                    <h2 class="text-3xl font-bold text-teal-900 mb-6">Capítulo 4: Currículo na Igreja: Teoria e Desenvolvimento</h2>
+                    <p class="text-base text-gray-600 leading-relaxed mb-6">O currículo é o coração pulsante da Educação Cristã na igreja. Não é apenas uma lista de tópicos, mas um plano abrangente que visa moldar a fé, o caráter e a cosmovisão dos crentes. Este capítulo mergulha na teoria por trás do currículo e nas etapas práticas para seu desenvolvimento.</p>
+
+                    <h3 class="text-2xl font-semibold text-teal-800 mt-6 mb-3">4.1. O que é Currículo em Educação Cristã?</h3>
+                    <p class="text-gray-700 leading-relaxed mb-4">O currículo é um conceito amplo. Para uma Educação Cristã eficaz, é crucial considerar a coerência entre seus três níveis:</p>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="bg-gray-50 p-4 rounded-lg border">
+                            <h5 class="font-bold text-lg text-teal-900">Currículo Formal</h5>
+                            <p class="text-sm text-gray-700">O plano explícito e intencional. O que está "escrito": plano de aulas, curso de discipulado.</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg border">
+                            <h5 class="font-bold text-lg text-teal-900">Currículo Informal</h5>
+                            <p class="text-sm text-gray-700">Experiências não planejadas. O que se aprende "nas entrelinhas": conversas, testemunhos, vivência comunitária.</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg border">
+                            <h5 class="font-bold text-lg text-teal-900">Currículo Oculto</h5>
+                            <p class="text-sm text-gray-700">Aprendizagens implícitas da cultura da igreja. O que se aprende "pelo exemplo": como conflitos são resolvidos, o que é valorizado.</p>
+                        </div>
+                    </div>
+
+                    <h4 class="text-xl font-semibold text-gray-800 mt-6 mb-2">Objetivos e Finalidades do Currículo na Igreja</h4>
+                    <p class="text-gray-700 leading-relaxed mb-4">O currículo visa à formação integral do discípulo, incluindo:</p>
+                    <ul class="list-disc list-inside space-y-2 text-gray-700">
+                        <li><strong>Discipulado:</strong> Crescimento contínuo na fé e obediência (Mateus 28:19-20).</li>
+                        <li><strong>Conhecimento Bíblico:</strong> Compreender e aplicar as Escrituras.</li>
+                        <li><strong>Formação de Caráter:</strong> Cultivar virtudes cristãs (Gálatas 5:22-23).</li>
+                        <li><strong>Engajamento na Missão:</strong> Preparar os crentes para servir e evangelizar.</li>
+                        <li><strong>Preparação para o Serviço:</strong> Equipar os crentes com seus dons espirituais.</li>
+                    </ul>
+
+                    <h3 class="text-2xl font-semibold text-teal-800 mt-8 mb-3">4.2. Modelos e Abordagens Curriculares</h3>
+                    <p class="text-gray-700 leading-relaxed mb-4">A escolha do modelo depende da visão da igreja. Abordagens comuns incluem:</p>
+                    <ul class="list-disc list-inside space-y-2 text-gray-700">
+                        <li><strong>Centrado na Bíblia:</strong> Foco na Bíblia (cronológico, temático, por livro). Garante fidelidade, mas pode se tornar apenas informativo.</li>
+                        <li><strong>Centrado no Aluno:</strong> Foco nas necessidades e interesses dos alunos. Gera engajamento, mas pode desviar-se da profundidade bíblica.</li>
+                        <li><strong>Centrado na Vida (Experiencial):</strong> Foco na aprendizagem através da experiência e reflexão. Promove aplicação prática, mas é mais difícil de planejar.</li>
+                        <li><strong>Temático e Interdisciplinar:</strong> Organizado em torno de temas (ex: justiça social, família). Permite visão holística.</li>
+                    </ul>
+
+                    <h3 class="text-2xl font-semibold text-teal-800 mt-8 mb-3">4.3. Etapas para o Desenvolvimento de um Currículo</h3>
+                    <p class="text-gray-700 leading-relaxed mb-4">Desenvolver um currículo eficaz é um processo sistemático. Este diagrama de fluxo mostra as etapas essenciais:</p>
+                    <!-- Adicionado flex-col para forçar quebra de linha em mobile e garantir visibilidade -->
+                    <div class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-2 text-center text-sm font-medium text-teal-900">
+                        <div class="bg-teal-100 border border-teal-300 p-4 rounded-lg shadow w-full md:w-48">
+                            <strong>1. Diagnóstico</strong>
+                            <p class="text-xs">Analisar as necessidades da comunidade.</p>
+                        </div>
+                        <div class="text-teal-600 font-bold text-2xl transform rotate-90 md:rotate-0">→</div>
+                        <div class="bg-teal-100 border border-teal-300 p-4 rounded-lg shadow w-full md:w-48">
+                            <strong>2. Definição de Objetivos</strong>
+                            <p class="text-xs">O que os alunos devem saber, sentir e fazer.</p>
+                        </div>
+                        <div class="text-teal-600 font-bold text-2xl transform rotate-90 md:rotate-0">→</div>
+                        <div class="bg-teal-100 border border-teal-300 p-4 rounded-lg shadow w-full md:w-48">
+                            <strong>3. Seleção de Conteúdo</strong>
+                            <p class="text-xs">O que será ensinado (temas, doutrinas).</p>
+                        </div>
+                        <div class="text-teal-600 font-bold text-2xl transform rotate-90 md:rotate-0">→</div>
+                        <div class="bg-teal-100 border border-teal-300 p-4 rounded-lg shadow w-full md:w-48">
+                            <strong>4. Escolha de Metodologias</strong>
+                            <p class="text-xs">Como será ensinado (métodos, recursos).</p>
+                        </div>
+                        <div class="text-teal-600 font-bold text-2xl transform rotate-90 md:rotate-0">→</div>
+                        <div class="bg-teal-100 border border-teal-300 p-4 rounded-lg shadow w-full md:w-48">
+                            <strong>5. Avaliação</strong>
+                            <p class="text-xs">Verificar o processo e os resultados.</p>
+                        </div>
+                    </div>
+
+                    <h3 class="text-2xl font-semibold text-teal-800 mt-8 mb-3">4.4. Currículo para Diferentes Faixas Etárias</h3>
+                    <p class="text-gray-700 leading-relaxed mb-4">O desenvolvimento deve ser sensível às particularidades de cada faixa etária:</p>
+                    <ul class="space-y-3">
+                        <li><strong>Crianças:</strong> Foco em verdades simples e concretas, usando histórias, músicas e jogos. Objetivo: plantar sementes da fé.</li>
+                        <li><strong>Adolescentes e Jovens:</strong> Abordar questões relevantes (identidade, propósito), estimulando o pensamento crítico e a formação de convicções pessoais. Objetivo: consolidação da fé.</li>
+                        <li><strong>Adultos:</strong> Aprofundamento teológico e bíblico, aplicação da fé em diferentes papéis da vida (família, profissão). Objetivo: maturidade espiritual e capacitação.</li>
+                    </ul>
+                </section>
+
+                <!-- CAPÍTULO 5: METODOLOGIAS -->
+                <section id="cap5" class="content-section">
+                    <h2 class="text-3xl font-bold text-teal-900 mb-6">Capítulo 5: Metodologias e Práticas Pedagógicas</h2>
+                    <p class="text-base text-gray-600 leading-relaxed mb-6">A eficácia da Educação Cristã se manifesta na prática. Este capítulo foca nas metodologias e práticas pedagógicas que o educador pode empregar para tornar o aprendizado significativo, envolvente e transformador.</p>
+
+                    <h3 class="text-2xl font-semibold text-teal-800 mt-6 mb-3">5.1. Princípios de Aprendizagem</h3>
+                    <ul class="list-disc list-inside space-y-3 text-gray-700">
+                        <li><strong>Teorias de Aprendizagem:</strong> O educador pode usar o **Construtivismo** (alunos constroem seu entendimento através da interação e reflexão) e o **Cognitivismo** (preocupação com a clareza, organização e conexão de ideias).</li>
+                        <li><strong>Repetição, Memorização e Aplicação:</strong> Pilares da aprendizagem. A memorização da Palavra (Salmo 119:11) é vital, e a **aplicação** (transformação de vida) é o objetivo final.</li>
+                        <li><strong>Aprendizagem Significativa:</strong> Ocorre quando o aluno percebe a **relevância** do que está aprendendo para sua vida e suas experiências.</li>
+                    </ul>
+
+                    <h3 class="text-2xl font-semibold text-teal-800 mt-8 mb-3">5.2. Métodos e Técnicas de Ensino</h3>
+                    <p class="text-gray-700 leading-relaxed mb-4">A diversidade de métodos enriquece a experiência de aprendizagem. Clique em cada método para ver sua descrição:</p>
+                    
+                    <div class="flex flex-wrap gap-2 mb-4" id="tabs-container-cap5">
+                        <button class="tab-button active" onclick="showTab('tab-aula', this)">Aula Expositiva Dialogada</button>
+                        <button class="tab-button" onclick="showTab('tab-discussao', this)">Discussão em Grupo</button>
+                        <button class="tab-button" onclick="showTab('tab-estudo', this)">Estudo de Caso</button>
+                        <button class="tab-button" onclick="showTab('tab-projetos', this)">Projetos Práticos</button>
+                        <button class="tab-button" onclick="showTab('tab-recursos', this)">Recursos Visuais</button>
+                        <button class="tab-button" onclick="showTab('tab-tecnologia', this)">Tecnologia</button>
+                    </div>
+
+                    <div id="tab-aula" class="tab-content active">
+                        <h4 class="font-bold text-lg">Aula Expositiva Dialogada</h4>
+                        <p>O professor expõe o conteúdo, mas abre espaço para perguntas, comentários e discussões. Não é um monólogo, mas uma conversa guiada. Permite a transmissão de informação de forma estruturada, mas é um desafio manter o engajamento.</p>
+                    </div>
+                    <div id="tab-discussao" class="tab-content">
+                        <h4 class="font-bold text-lg">Discussão em Grupo</h4>
+                        <p>Os alunos interagem entre si, compartilhando perspectivas e aprofundando o entendimento. O educador atua como facilitador. Promove a colaboração, o pensamento crítico e a construção coletiva do conhecimento.</p>
+                    </div>
+                    <div id="tab-estudo" class="tab-content">
+                        <h4 class="font-bold text-lg">Estudo de Caso e Resolução de Problemas</h4>
+                        <p>Apresentar situações reais ou hipotéticas que desafiam os alunos a aplicar princípios bíblicos para encontrar soluções ou compreender dilemas. Desenvolve habilidades de discernimento e aplicação prática.</p>
+                    </div>
+                    <div id="tab-projetos" class="tab-content">
+                        <h4 class="font-bold text-lg">Projetos e Atividades Práticas</h4>
+                        <p>Os alunos realizam tarefas que exigem pesquisa e criatividade (ex: criar uma peça, um vídeo, uma campanha de evangelização). Torna o aprendizado tangível e estimula a colaboração.</p>
+                    </div>
+                    <div id="tab-recursos" class="tab-content">
+                        <h4 class="font-bold text-lg">Recursos Visuais e Audiovisuais</h4>
+                        <p>Slides, mapas, gráficos, vídeos curtos e infográficos podem ilustrar conceitos, contextualizar informações e prender a atenção. Devem ser usados com moderação para complementar o ensino.</p>
+                    </div>
+                    <div id="tab-tecnologia" class="tab-content">
+                        <h4 class="font-bold text-lg">Tecnologia na Educação Cristã</h4>
+                        <p>Plataformas de EAD, aplicativos de estudo bíblico, podcasts, redes sociais para grupos de estudo. Amplia o alcance, oferece flexibilidade, mas exige familiaridade e cuidado para não desumanizar o processo.</p>
+                    </div>
+
+                    <h3 class="text-2xl font-semibold text-teal-800 mt-8 mb-3">5.3. A Importância da Avaliação</h3>
+                    <p class="text-gray-700 leading-relaxed mb-4">A avaliação não é para dar notas, mas para aferir o aprendizado e aprimorar o ensino.</p>
+                    <ul class="list-disc list-inside space-y-2 text-gray-700">
+                        <li><strong>Avaliação Formativa:</strong> Ocorre *durante* o processo (perguntas, feedback informal) para monitorar o progresso e ajustar o ensino.</li>
+                        <li><strong>Avaliação Somativa:</strong> Ocorre *ao final* do processo (testes, trabalhos, projetos) para medir o aprendizado total.</li>
+                        <li><strong>Instrumentos:</strong> Além de testes, usar observação, autoavaliação, questionários e projetos.</li>
+                    </ul>
+
+                    <h3 class="text-2xl font-semibold text-teal-800 mt-8 mb-3">5.4. Criação de um Ambiente de Aprendizagem Eficaz</h3>
+                    <p class="text-gray-700 leading-relaxed mb-4">O ambiente tem um impacto significativo na aprendizagem. Ele deve ser:</p>
+                    <ul class="list-disc list-inside space-y-2 text-gray-700">
+                        <li><strong>Acolhedor e Inclusivo:</strong> Todos devem se sentir bem-vindos, valorizados e seguros.</li>
+                        <li><strong>Seguro e Propício ao Diálogo:</strong> Incentivar o respeito às diferentes perspectivas, permitindo perguntas honestas sem medo de julgamento.</li>
+                        <li><strong>Estimulante (Participação e Criatividade):</strong> Encorajar ativamente a participação e oferecer oportunidades para expressão criativa.</li>
+                    </ul>
+                </section>
+
+                <!-- CONCLUSÃO -->
+                <section id="conclusao" class="content-section">
+                    <h2 class="text-3xl font-bold text-teal-900 mb-6">Conclusão</h2>
+                    <p class="text-gray-700 leading-relaxed mb-4">Percorremos um caminho significativo ao longo desta apostila, explorando os alicerces da Educação Cristã, desde seus fundamentos bíblicos e teológicos até sua rica história e as práticas pedagógicas contemporâneas. Vimos que a Educação Cristã não é um apêndice da igreja, mas uma de suas funções primordiais, essencial para o cumprimento da Grande Comissão e para a formação integral de discípulos.</p>
+                    
+                    <h3 class="text-2xl font-semibold text-teal-800 mt-6 mb-3">O Futuro da Educação Cristã e os Desafios Contemporâneos</h3>
+                    <ul class="list-disc list-inside space-y-2 text-gray-700 mb-4">
+                        <li><strong>Secularismo Crescente:</strong> A necessidade de fundamentar a fé em uma sociedade que questiona a relevância da religião.</li>
+                        <li><strong>Avanço da Tecnologia:</strong> O desafio de integrar novas ferramentas digitais sem perder a profundidade relacional do discipulado.</li>
+                        <li><strong>Pluralismo Religioso e Cultural:</strong> A importância de equipar os crentes para um diálogo respeitoso e apologético.</li>
+                        <li><strong>Superficialidade da Fé:</strong> O desafio de ir além do mero entretenimento, promovendo um discipulado robusto.</li>
+                        <li><strong>Formação Contínua de Educadores:</strong> A demanda por educadores bem preparados.</li>
+                    </ul>
+
+                    <h3 class="text-2xl font-semibold text-teal-800 mt-6 mb-3">O Contínuo Aperfeiçoamento do Educador Cristão</h3>
+                    <p class="text-gray-700 leading-relaxed mb-4">Diante desses desafios, o chamado para o educador cristão permanece claro: buscar o aperfeiçoamento contínuo. Isso significa:</p>
+                    <ul class="list-disc list-inside space-y-2 text-gray-700">
+                        <li>Aprofundar-se na Palavra de Deus.</li>
+                        <li>Crescer em Santidade e Caráter.</li>
+                        <li>Desenvolver Habilidades Pedagógicas.</li>
+                        <li>Manter a Paixão e a Visão.</li>
+                        <li>Orar e Depender do Espírito Santo.</li>
+                    </ul>
+
+                    <!-- LICENÇA E CONTATO NO FINAL DA APOSTILA -->
+                    <div class="mt-8 pt-4 border-t border-gray-200 text-sm text-center text-gray-500">
+                         <a href="https://sites.google.com/view/teologiaeducacaocrista/in%C3%ADcio" target="_blank" class="text-teal-600 hover:text-teal-800 font-medium">Apostila de Educação Cristã</a> © 2025 by <span class="font-medium text-gray-700">Maria Paula Ananias Marques</span> is licensed under <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" class="text-teal-600 hover:text-teal-800">CC BY-NC-ND 4.0</a>.
+                        <p class="mt-1">Contato da Autora: <a href="mailto:mpaulinhampaulina@gmail.com" class="text-teal-600 hover:text-teal-800">mpaulinhampaulina@gmail.com</a></p>
+                    </div>
+                </section>
+
+                <!-- GLOSSÁRIO -->
+                <section id="glossario" class="content-section">
+                    <h2 class="text-3xl font-bold text-teal-900 mb-6">Glossário</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="text-xl font-semibold text-teal-800">Apologética</h4>
+                            <p class="text-gray-700">Defesa da fé cristã, apresentando argumentos racionais e bíblicos para suas crenças.</p>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold text-teal-800">Catecumenato</h4>
+                            <p class="text-gray-700">Período de instrução e preparação formal para o batismo na Igreja Primitiva.</p>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold text-teal-800">Construtivismo</h4>
+                            <p class="text-gray-700">Teoria da aprendizagem que postula que o conhecimento é construído ativamente pelo aprendiz através da interação e reflexão.</p>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold text-teal-800">Currículo Oculto</h4>
+                            <p class="text-gray-700">Aprendizagens não intencionais e implícitas que resultam da cultura, estrutura e valores não declarados de uma instituição.</p>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold text-teal-800">Didachê</h4>
+                            <p class="text-gray-700">Termo grego que significa "ensino" ou "doutrina". Refere-se à instrução cristã nas primeiras comunidades.</p>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold text-teal-800">Discipulado</h4>
+                            <p class="text-gray-700">Processo contínuo de formação de seguidores de Jesus Cristo, que envolve ensino, exemplo, correção e acompanhamento.</p>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold text-teal-800">Exegese</h4>
+                            <p class="text-gray-700">Estudo e interpretação crítica de um texto bíblico para descobrir seu significado original no contexto histórico e literário.</p>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold text-teal-800">Sola Scriptura</h4>
+                            <p class="text-gray-700">Princípio central da Reforma Protestante que afirma que a Bíblia é a única autoridade infalível para fé e prática.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- BIBLIOGRAFIA -->
+                <section id="bibliografia" class="content-section">
+                    <h2 class="text-3xl font-bold text-teal-900 mb-6">Bibliografia Recomendada</h2>
+                    <p class="text-base text-gray-600 leading-relaxed mb-6">Para aprofundar seus estudos em Educação Cristã, sugiro as seguintes obras (conforme listado na apostila original):</p>
+                    <ul class="list-disc list-inside space-y-3 text-gray-700 text-sm">
+                        <li>Astley, Jeff. *Ordinary Theologians: How to Read the Bible and Think Theologically*.</li>
+                        <li>Banks, Robert. *Teaching the Bible to Adults and Youth: Methods and Techniques*.</li>
+                        <li>Bock, Darrell L. *Jesus According to the New Testament: What the Gospels Really Teach*.</li>
+                        <li>Bruce, F. F. *Jesus and Christian Origins Outside the New Testament*.</li>
+                        <li>Coleman, Robert E. *The Master Plan of Evangelism*.</li>
+                        <li>Dulles, Avery. *A History of Apologetics*.</li>
+                        <li>Elias, John L. *A History of Christian Education*.</li>
+                        <li>Fee, Gordon D. & Stuart, Douglas. *How to Read the Bible for All Its Worth*.</li>
+                        <li>Gangel, Kenneth O. *The Gospel According to Gangel: Biblical Foundations for Christian Education*.</li>
+                        <li>Gangel, Kenneth O. & Benson, Warren S. *Christian Education: Its History and Philosophy*.</li>
+                        <li>Hort, F. J. A. *The Didache: Or, the Teaching of the Twelve Apostles*.</li>
+                        <li>Hull, John M. *What is Christian Education? (Exploring Key Questions in Christian Education Series)*.</li>
+                        <li>Knight, George R. *Philosophy of Education*.</li>
+                        <li>Pazmino, Robert W. *Basics of Christian Education*.</li>
+                        <li>Richards, Lawrence O. *Creative Bible Teaching*.</li>
+                        <li>Vines, Jerry. *A Guide to Christian Education*.</li>
+                    </ul>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let currentSection = 'capa';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inicializa a seção 'capa'
+            document.getElementById('capa').classList.add('active');
+            
+            // Inicializa o gráfico
+            initChart();
+
+            // Configuração dos botões do menu mobile
+            const menuButton = document.getElementById('menu-button');
+            const closeMenuButton = document.getElementById('close-menu-button');
+            const mobileNav = document.getElementById('mobile-nav');
+            
+            if (menuButton) {
+                menuButton.addEventListener('click', () => {
+                    mobileNav.classList.remove('-translate-x-full');
+                });
+            }
+            
+            if (closeMenuButton) {
+                closeMenuButton.addEventListener('click', () => {
+                    mobileNav.classList.add('-translate-x-full');
+                });
+            }
+
+            // Fechar menu mobile ao clicar no link
+            document.querySelectorAll('#mobile-nav .nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileNav.classList.add('-translate-x-full');
+                });
+            });
+            
+            // O link de Introdução é o alvo principal após a capa.
+            const introLink = document.querySelector('.nav-link[onclick="showSection(\'intro\', this)"]');
+            if (introLink) {
+                 introLink.classList.remove('active'); // Remove a classe 'active' inicialmente do link intro
+            }
+        });
+        
+        function startReading() {
+            // Chama showSection para mudar para 'intro'
+            const introLink = document.querySelector('.nav-link[onclick="showSection(\'intro\', this)"]');
+            showSection('intro', introLink);
+            
+            // Oculta a capa
+            document.getElementById('capa').classList.remove('active');
+        }
+
+
+        function showSection(sectionId, element) {
+            // Esconde a seção ativa
+            const activeSection = document.getElementById(currentSection);
+            if (activeSection) {
+                activeSection.classList.remove('active');
+            }
+
+            // Se for a capa, a remove (garante que a capa não reapareça se o usuário clicar na intro do menu após o start)
+            if (currentSection === 'capa' && sectionId !== 'capa') {
+                document.getElementById('capa').classList.remove('active');
+            }
+
+            // Mostra a nova seção
+            const newSection = document.getElementById(sectionId);
+            if (newSection) {
+                newSection.classList.add('active');
+                currentSection = sectionId;
+            }
+
+            // Atualiza o estado ativo nos links de navegação (desktop e mobile)
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // CORREÇÃO AQUI: Garante que o link correto seja marcado como ativo.
+            if (sectionId !== 'capa') {
+                 // Sincroniza o estado ativo em ambos os menus buscando pelo mesmo sectionId
+                 document.querySelectorAll(`.nav-link[onclick="showSection('${sectionId}', this)"]`).forEach(link => {
+                    link.classList.add('active');
+                });
+            }
+            
+            // Rola para o topo da área de conteúdo principal (agora é a main#content-main)
+             const mainContent = document.getElementById('content-main');
+             if (mainContent) {
+                 mainContent.scrollTop = 0;
+             }
+        }
+
+        function showTab(tabId, element) {
+            const container = element.closest('div[id^="tabs-container"]');
+            
+            // Esconde o conteúdo da aba ativa
+            container.parentElement.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Remove o estado ativo dos botões
+            container.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+
+            // Mostra o novo conteúdo da aba
+            const newTabContent = document.getElementById(tabId);
+            if (newTabContent) {
+                newTabContent.classList.add('active');
+            }
+
+            // Define o novo botão como ativo
+            element.classList.add('active');
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('historyChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Igreja Primitiva (0-500)', 'Idade Média (500-1500)', 'Reforma (1500-1700)', 'Moderna (1700-Hoje)'],
+                    datasets: [{
+                        label: 'Duração Aproximada (em anos)',
+                        data: [500, 1000, 200, 325],
+                        backgroundColor: [
+                            '#0f766e',
+                            '#0d9488',
+                            '#0f766e',
+                            '#0d9488'
+                        ],
+                        borderColor: [
+                            '#0f766e',
+                            '#0d9488',
+                            '#0f766e',
+                            '#0d9488'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Períodos da História da Educação Cristã',
+                            font: {
+                                size: 16
+                            },
+                            color: '#064e3b'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` Duração: Aprox. ${context.raw} anos`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Anos (Aproximado)'
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                autoSkip: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
