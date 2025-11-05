@@ -80,6 +80,23 @@
         #capa {
             min-height: 100vh;
         }
+        /* Container para vídeos responsivos (16:9) */
+        .video-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio (9/16 * 100) */
+            height: 0;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+            border-radius: 0.5rem;
+        }
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -260,9 +277,16 @@
                 <section id="cap2" class="content-section">
                     <h2 class="text-3xl font-bold text-teal-900 mb-6">Capítulo 2: História da Educação Cristã</h2>
                     <p class="text-base text-gray-600 leading-relaxed mb-6">Compreender a trajetória da Educação Cristã ao longo dos séculos é fundamental para apreciarmos sua riqueza e diversidade. A história nos mostra como a igreja, em diferentes contextos e épocas, se esforçou para cumprir o mandato educacional, adaptando-se e inovando para transmitir a fé e formar novas gerações de crentes.</p>
+
+                    <!-- VÍDEO COMPLEMENTAR (NOVO VÍDEO INSERIDO AQUI) -->
+                    <h3 class="text-2xl font-semibold text-teal-800 mt-6 mb-3">Vídeo: Reforma Protestante em 5 Minutos (Síntese)</h3>
+                    <p class="text-gray-700 leading-relaxed mb-4">Assista a este vídeo para uma síntese visual do movimento da Reforma Protestante, um divisor de águas na história da Educação Cristã (Cap. 2.3).</p>
+                    <div class="video-container">
+                        <iframe src="https://www.youtube.com/embed/pThrXiEgUl8" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
                     
                     <h3 class="text-2xl font-semibold text-teal-800 mt-6 mb-3">Linha do Tempo Visual da Educação Cristã</h3>
-                    <p class="text-gray-700 leading-relaxed mb-4">Em vez de apenas texto, este gráfico visualiza os principais períodos históricos da Educação Cristã, permitindo uma compreensão mais clara da sua evolução ao longo do tempo.</p>
+                    <p class="text-gray-700 leading-relaxed mb-4">Este gráfico resume os principais períodos históricos da Educação Cristã, permitindo uma compreensão mais clara da sua evolução ao longo do tempo.</p>
                     <div class="chart-container">
                         <canvas id="historyChart"></canvas>
                     </div>
@@ -642,10 +666,10 @@
                 });
             });
             
-            // O link de Introdução é o alvo principal após a capa.
+            // Garante que a Introdução comece desativada visualmente se a capa estiver ativa
             const introLink = document.querySelector('.nav-link[onclick="showSection(\'intro\', this)"]');
             if (introLink) {
-                 introLink.classList.remove('active'); // Remove a classe 'active' inicialmente do link intro
+                 introLink.classList.remove('active');
             }
         });
         
@@ -791,4 +815,3 @@
     </script>
 </body>
 </html>
-
